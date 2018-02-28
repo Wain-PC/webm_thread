@@ -16,9 +16,9 @@ const subscribeToExchange = (channel, callback) =>
         });
 
 const connectionInitialize = (url) => amqp.connect(url)
-    .catch(err => new Promise(resolve => {
-        console.log("Rabbit Unavailable, waiting to try again in 5 seconds");
-        setTimeout(() => resolve(connectionInitialize(url)), 5000);
+    .catch((err) => new Promise(resolve => {
+        console.log(`Rabbit is unavailable (${err}), waiting to try again in ${config.reconnectTimeout/1000} seconds `);
+        setTimeout(() => resolve(connectionInitialize(url)), config.reconnectTimeout);
     }));
 
 const connect = (onMessage = () => {
@@ -74,7 +74,7 @@ const publish = (payloadObj) => {
             contentType: 'application/json',
             replyTo: channelRoutingKey,
             correlationId,
-        }));
+        })).catch(err => console.error(err));
 };
 
 module.exports.publish = publish;

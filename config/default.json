@@ -1,6 +1,7 @@
 {
   "webmthread": {
     "rabbitMQ": {
+      "reconnectTimeout": 5000,
       "hostname": "rabbitmq",
       "port": 5672,
       "username": "guest",
