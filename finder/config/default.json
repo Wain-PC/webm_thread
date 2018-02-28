@@ -1,5 +1,8 @@
 {
   "webmthread": {
+    "urls": {
+      "catalog": "https://2ch.hk/b/catalog_num.json"
+    },
     "rabbitMQ": {
       "hostname": "rabbitmq",
       "port": 5672,
