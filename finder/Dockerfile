@@ -1,7 +1,9 @@
 FROM node:9
 
-RUN "yarn"
-COPY . /app
+COPY ./package.json /app/
+COPY ./yarn.lock /app/
 WORKDIR /app
+RUN yarn
+COPY . /app
 
 CMD ["node", "index.js"]
