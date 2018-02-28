@@ -15,6 +15,12 @@ const subscribeToExchange = (channel, callback) =>
             return channel;
         });
 
+const connectionInitialize = (url) => amqp.connect(url)
+    .catch(err => new Promise(resolve => {
+        console.log("Rabbit Unavailable, waiting to try again in 5 seconds");
+        setTimeout(() => resolve(connectionInitialize(url)), 5000);
+    }));
+
 const connect = (onMessage = () => {
 }) => {
     const {
@@ -27,12 +33,7 @@ const connect = (onMessage = () => {
         port,
         auth: `${username}:${password}`,
     });
-    channelPromise = amqp.connect(connectionURL)
-        .catch(err => new Promise((resolve) => {
-                console.log("Rabbit Unavailable, waiting to try again in 5 seconds");
-                setTimeout(() => resolve(amqp.connect(connectionURL)), 5000);
-            })
-        )
+    channelPromise = connectionInitialize(connectionURL)
         .then(connection => {
             console.log('Creating Channel');
             return connection.createChannel();
