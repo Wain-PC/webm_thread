@@ -19,8 +19,6 @@ services:
       - webmthread
     depends_on:
       - rabbitmq
-    environment:
-      - NODE_ENV=finder
 volumes:
   rabbitmq:
 networks:
