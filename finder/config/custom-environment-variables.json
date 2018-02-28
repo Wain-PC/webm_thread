@@ -1,0 +1,9 @@
+{
+  "webmthread": {
+    "port": "WEBMTHREAD_PORT",
+    "rabbitMQ": {
+      "hostname": "WEBMTHREAD_RABBITMQ_HOSTNAME",
+      "port": "WEBMTHREAD_RABBITMQ_PORT"
+    }
+  }
+}

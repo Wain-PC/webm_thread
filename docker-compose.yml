@@ -1,0 +1,23 @@
+version: '3'
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+     - "5671:5671"
+     - "5672:5672"
+     - "15672:15672"
+     - "25672:25672"
+    volumes:
+     - rabbitmq:/var/lib/rabbitmq
+    networks:
+      - webmthread
+  finder:
+    build: ./finder
+    networks:
+      - webmthread
+    depends_on:
+      - rabbitmq
+volumes:
+  rabbitmq:
+networks:
+  webmthread:
