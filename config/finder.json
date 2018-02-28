@@ -4,10 +4,6 @@
       "catalog": "https://2ch.hk/b/catalog_num.json"
     },
     "rabbitMQ": {
-      "hostname": "rabbitmq",
-      "port": 5672,
-      "username": "guest",
-      "password": "guest",
       "exchanges": {
         "publish": "Finder"
       },

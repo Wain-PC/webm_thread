@@ -1,9 +1,10 @@
 FROM node:9
 
-COPY ./package.json /app/
-COPY ./yarn.lock /app/
+COPY config /app/config
+COPY ./finder/package.json /app/
+COPY ./finder/yarn.lock /app/
 WORKDIR /app
 RUN yarn
-COPY . /app
+COPY finder /app
 
 CMD ["node", "index.js"]

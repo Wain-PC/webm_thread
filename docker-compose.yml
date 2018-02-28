@@ -12,11 +12,15 @@ services:
     networks:
       - webmthread
   finder:
-    build: ./finder
+    build:
+     context: .
+     dockerfile: ./finder/Dockerfile
     networks:
       - webmthread
     depends_on:
       - rabbitmq
+    environment:
+      - NODE_ENV=finder
 volumes:
   rabbitmq:
 networks:
