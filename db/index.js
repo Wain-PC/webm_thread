@@ -1,22 +1,30 @@
 const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 const rabbit = require('./utils/rabbit');
 const config = require('config').get('webmthread');
 const models = {};
 let sequelize;
 
 const api = {
-  getSources: () => models.source.findAll()
+    getSources: () => models.source.findAll({attributes: ['url', 'description']}),
+    saveVideos: ({threadUrl, videos}) => models.thread.findOne({
+        where: {
+            url: threadUrl
+        }
+    }).then(thread => thread.addVideos(videos))
 };
 
 const onMessage = ({type, payload}, correlationId, replyTo) => {
     console.log(`Received message from RabbitMQ
     Type: ${type}
-    Payload: ${JSON.stringify(payload)}`, );
-    setTimeout(()=>{
-        if(!api[type]) {
+    Payload: ${JSON.stringify(payload)}`,);
+    setTimeout(() => {
+        if (!api[type]) {
             rabbit.publish({error: `DB has no such RPC method (${type})`}, correlationId, replyTo);
         }
-        api[type](payload).then(data=>rabbit.publish(data, correlationId, replyTo));
+        api[type](payload).then(
+            data => rabbit.publish(data, correlationId, replyTo),
+            error => rabbit.publish(error, correlationId, replyTo));
     }, 100);
 };
 
@@ -78,8 +86,8 @@ createModels = (withClear = false) => {
 
     return Promise
         .all(Object.keys(models)
-        .map(key => models[key].sync({force: (withClear)})))
-        .then(()=>models);
+            .map(key => models[key].sync({force: (withClear)})))
+        .then(() => models);
 };
 
 console.log("Starting Rabbit connection!");
