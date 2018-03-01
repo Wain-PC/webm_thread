@@ -4,10 +4,15 @@ const config = require('config').get('webmthread');
 const models = {};
 let sequelize;
 
-const onMessage = (models) => ({type, payload}) => {
+const onMessage = ({type, payload}, correlationId, replyTo) => {
     console.log(`Received message from RabbitMQ
     Type: ${type}
     Payload: ${JSON.stringify(payload)}`, );
+    setTimeout(()=>{
+        console.log('Pub!');
+        rabbit.publish({type: type + '!!!', payload}, correlationId, replyTo);
+    }, 100);
+
 };
 
 /**

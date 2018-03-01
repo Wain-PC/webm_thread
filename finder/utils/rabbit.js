@@ -59,14 +59,16 @@ const connect = (onMessage = () => {
                 console.log(`Found subscription to exchange ${dbResponses}, subscribing...`);
                 promiseArray.push(subscribeToExchange(channel, dbResponses, (message) => {
                     const {content, properties: {correlationId}} = message;
+                    console.log(`Received DB response
+                    with corrId ${correlationId}, checking...`);
                     if (requests[correlationId]) {
-                        const {resolve} = requests[correlationId];
+                        const resolve = requests[correlationId];
                         resolve(JSON.parse(content.toString("utf-8")));
                         delete requests[correlationId];
                     }
                 }));
             }
-            return Promise.all(promiseArray).then(()=>channel);
+            return Promise.all(promiseArray).then(() => channel);
         });
     return channelPromise;
 };
@@ -91,6 +93,7 @@ const publish = (payloadObj) => {
         })).catch(err => console.error(err));
 };
 
+//TODO: Rewrite using memcached
 const requests = {};
 
 const dbRequest = (type, payload) => {
@@ -101,14 +104,24 @@ const dbRequest = (type, payload) => {
 
     return new Promise((resolve, reject) => {
         const correlationId = uuid();
-        requests[correlationId] = {resolve, reject};
         channelPromise
-            .then(channel => channel.publish(dbRequests, config.routingKey, new Buffer(JSON.stringify({type, payload})), {
+            .then(channel => channel.publish(dbRequests, config.routingKey, new Buffer(JSON.stringify({
+                type,
+                payload
+            })), {
                 deliveryMode: 2,
                 contentType: 'application/json',
                 replyTo: channelRoutingKey,
                 correlationId,
-            })).catch(err => console.error(err));
+            }))
+            .then(
+                () => {
+                    requests[correlationId] = resolve;
+                },
+                (err) => {
+                    delete requests[correlationId];
+                    reject(err);
+                });
     });
 };
 

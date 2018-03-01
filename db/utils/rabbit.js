@@ -43,6 +43,7 @@ const connect = (onMessage = () => {
         })
         .then(channel => {
             const {publish, subscribe} = config.exchanges;
+            const promiseArray = [];
             console.log("Got channel");
             if (publish) {
                 console.log(`Found publish ability to exchange ${publish}, creating exchange...`);
@@ -50,17 +51,17 @@ const connect = (onMessage = () => {
             }
             if (subscribe) {
                 console.log(`Found subscription to exchange ${subscribe}, subscribing...`);
-                return subscribeToExchange(channel, (message) => {
-                    const {content} = message;
-                    onMessage(JSON.parse(content.toString("utf-8")));
-                });
+                promiseArray.push(subscribeToExchange(channel, (message) => {
+                    const {content, properties: {correlationId, replyTo}} = message;
+                    onMessage(JSON.parse(content.toString("utf-8")), correlationId, replyTo);
+                }));
             }
-            return channel;
+            return Promise.all(promiseArray).then(()=>channel);
         });
     return channelPromise;
 };
 
-const publish = (payloadObj) => {
+const publish = (payloadObj, correlationId, replyTo) => {
     const {publish} = config.exchanges;
     if (!channelPromise) {
         return Promise.reject(new Error('No RabbitMQ connection available to publish'));
@@ -69,15 +70,17 @@ const publish = (payloadObj) => {
         return Promise.reject(new Error('No `publish` exchange set in config, nowhere to publish the message.'));
     }
 
-    const correlationId = uuid();
-
     return channelPromise
-        .then(channel => channel.publish(publish, config.routingKey, new Buffer(JSON.stringify(payloadObj)), {
+        .then(channel => channel.publish(publish, replyTo, new Buffer(JSON.stringify(payloadObj)), {
             deliveryMode: 2,
             contentType: 'application/json',
-            replyTo: channelRoutingKey,
             correlationId,
-        })).catch(err => console.error(err));
+        })).then((res)=>{
+            console.log(`Published to exchange ${publish} 
+            with routingKey ${replyTo}
+            with correlationId ${correlationId}
+            `);
+        },err => console.error(err));
 };
 
 module.exports.publish = publish;
