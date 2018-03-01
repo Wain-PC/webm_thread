@@ -7,13 +7,16 @@ const config = require('config').get('webmthread').get('rabbitMQ');
 let channelPromise;
 const channelRoutingKey = uuid();
 
-const subscribeToExchange = (channel, callback) =>
+const subscribeToExchange = (channel, callback) => {
+    const {subscribe} = config.exchanges;
+    channel.assertExchange(subscribe, 'fanout');
     channel.assertQueue(null, {durable: false, autoDelete: true})
         .then(({queue}) => {
-            channel.bindQueue(queue, config.exchanges.subscribe, channelRoutingKey);
+            channel.bindQueue(queue, subscribe, channelRoutingKey);
             channel.consume(queue, callback, {noAck: true});
             return channel;
         });
+};
 
 const connectionInitialize = (url) => amqp.connect(url)
     .catch((err) => new Promise(resolve => {
@@ -41,9 +44,9 @@ const connect = (onMessage = () => {
         .then(channel => {
             const {publish, subscribe} = config.exchanges;
             console.log("Got channel");
-            if (config.exchanges.publish) {
+            if (publish) {
                 console.log(`Found publish ability to exchange ${publish}, creating exchange...`);
-                channel.assertExchange(publish)
+                channel.assertExchange(publish, 'fanout');
             }
             if (subscribe) {
                 console.log(`Found subscription to exchange ${subscribe}, subscribing...`);
