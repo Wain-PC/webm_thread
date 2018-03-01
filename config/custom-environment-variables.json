@@ -1,6 +1,9 @@
 {
   "webmthread": {
     "port": "WEBMTHREAD_PORT",
+    "db": {
+      "storage": "WEBMTHREAD_DB_STORAGE"
+    },
     "rabbitMQ": {
       "hostname": "WEBMTHREAD_RABBITMQ_HOSTNAME",
       "port": "WEBMTHREAD_RABBITMQ_PORT"

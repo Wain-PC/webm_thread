@@ -1,0 +1,27 @@
+{
+  "webmthread": {
+    "db": {
+      "dialect": "sqlite",
+      "host": "localhost",
+      "port": 5984,
+      "storage": "/app/db/db.sqlite",
+      "name": "db",
+      "user": "root",
+      "password": null,
+      "pool": {
+        "max": 5,
+        "min": 0,
+        "idle": 10000
+      },
+      "salt": "defaultSalt",
+      "logging": false
+    },
+    "rabbitMQ": {
+      "exchanges": {
+        "subscribe": "Db.Requests",
+        "publish": "Db.Responses"
+      },
+      "routingKey": "Db"
+    }
+  }
+}

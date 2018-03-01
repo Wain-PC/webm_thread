@@ -19,7 +19,18 @@ services:
       - webmthread
     depends_on:
       - rabbitmq
+  db:
+    build:
+     context: .
+     dockerfile: ./db/Dockerfile
+    networks:
+      - webmthread
+    depends_on:
+      - rabbitmq
+    volumes:
+      - db:/app/db
 volumes:
   rabbitmq:
+  db:
 networks:
   webmthread:
