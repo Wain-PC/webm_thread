@@ -1,7 +1,8 @@
 {
   "webmthread": {
-    "urls": {
-      "catalog": "https://2ch.hk/b/catalog_num.json"
+    "finder": {
+      "catalog": "https://2ch.hk/b/catalog_num.json",
+      "threadParseInterval": 5000
     },
     "rabbitMQ": {
       "exchanges": {
