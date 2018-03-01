@@ -1,7 +1,7 @@
 {
   "webmthread": {
     "urls": {
-      "domain": "https://2ch.hk/"
+      "domain": "https://2ch.hk"
     },
     "rabbitMQ": {
       "exchanges": {

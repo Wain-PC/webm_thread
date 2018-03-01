@@ -7,11 +7,16 @@ let sequelize;
 
 const api = {
     getSources: () => models.source.findAll({attributes: ['url', 'description']}),
+    saveThread: thread => models.thread.findOrCreate({where: {url: thread.url}, defaults: thread}),
     saveVideos: ({threadUrl, videos}) => models.thread.findOne({
         where: {
             url: threadUrl
         }
-    }).then(thread => thread.addVideos(videos))
+        //TODO: Refactor batch save
+    }).then(thread => thread ? Promise.all(videos.map(video => models.video.findOrCreate({
+        where: {url: video.url},
+        defaults: video
+    }))) : [])
 };
 
 const onMessage = ({type, payload}, correlationId, replyTo) => {
@@ -19,12 +24,12 @@ const onMessage = ({type, payload}, correlationId, replyTo) => {
     Type: ${type}
     Payload: ${JSON.stringify(payload)}`,);
     setTimeout(() => {
-        if (!api[type]) {
-            rabbit.publish({error: `DB has no such RPC method (${type})`}, correlationId, replyTo);
+        if (typeof api[type] !== 'function') {
+            return rabbit.publish({error: `DB has no such RPC method (${type})`}, correlationId, replyTo);
         }
-        api[type](payload).then(
+        return api[type](payload).then(
             data => rabbit.publish(data, correlationId, replyTo),
-            error => rabbit.publish(error, correlationId, replyTo));
+            ({message}) => rabbit.publish({error: message}, correlationId, replyTo));
     }, 100);
 };
 
@@ -95,7 +100,7 @@ connectToDb()
     .then(sequelizeInstance => {
         console.log("DB Connection instantiated");
         sequelize = sequelizeInstance;
-        createModels(sequelizeInstance);
+        createModels();
         return rabbit.connect(onMessage);
     })
     .then(() => {

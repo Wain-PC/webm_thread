@@ -9,11 +9,11 @@ const onMessage = (message) => {
 
 const loadSources = () => rabbit.dbRequest('getSources');
 
-const loadThreads = (catalogUrl) => {
-    console.log(`Loading threads list from ${catalogUrl}`);
+const loadThreads = (sourceUrl) => {
+    console.log(`Loading threads list from ${sourceUrl}`);
     return request({
         method: 'GET',
-        uri: catalogUrl,
+        uri: sourceUrl,
         json: true
     }).then(({threads}) => threads.reduce(function (webmThreads, thread) {
         const {num, subject, comment, posts_count, files_count} = thread;
@@ -26,7 +26,7 @@ const loadThreads = (catalogUrl) => {
                 Posts: ${posts_count}
                 Files: ${files_count}
                 `);
-            webmThreads.push({boardId: 'b', threadId: num});
+            webmThreads.push({boardId: 'b', threadId: num, sourceUrl});
         }
         return webmThreads;
     }, []))
@@ -44,7 +44,7 @@ const loadThreads = (catalogUrl) => {
 const work = () => loadSources().then(sources => sources.map(({url}) => loadThreads(url)));
 const start = () => work()
     .then(()=>
-        setTimeout(work, config.finder.updateTimeout)
+        setTimeout(start, config.finder.updateTimeout)
     );
 
 console.log("Starting Rabbit connection!");

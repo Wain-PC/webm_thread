@@ -62,8 +62,20 @@ const connect = (onMessage = () => {
                     console.log(`Received DB response
                     with corrId ${correlationId}, checking...`);
                     if (requests[correlationId]) {
-                        const resolve = requests[correlationId];
-                        resolve(JSON.parse(content.toString("utf-8")));
+                        const {resolve, reject} = requests[correlationId];
+                        let payload = {};
+                        try {
+                            payload = JSON.parse(content.toString("utf-8"));
+                        } catch (err) {
+                            payload = {
+                                error: 'Failed to parse response'
+                            };
+                        }
+                        if (payload.hasOwnProperty('error')) {
+                            reject(payload);
+                        } else {
+                            resolve(payload);
+                        }
                         delete requests[correlationId];
                     }
                 }));
@@ -116,7 +128,7 @@ const dbRequest = (type, payload = {}) => {
             }))
             .then(
                 () => {
-                    requests[correlationId] = resolve;
+                    requests[correlationId] = {resolve, reject};
                 },
                 (err) => {
                     delete requests[correlationId];

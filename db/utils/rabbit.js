@@ -79,6 +79,7 @@ const publish = (payloadObj, correlationId, replyTo) => {
             console.log(`Published to exchange ${publish} 
             with routingKey ${replyTo}
             with correlationId ${correlationId}
+            with data ${JSON.stringify(payloadObj)}
             `);
         },err => console.error(err));
 };
