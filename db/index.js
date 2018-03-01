@@ -4,15 +4,20 @@ const config = require('config').get('webmthread');
 const models = {};
 let sequelize;
 
+const api = {
+  getSources: () => models.source.findAll()
+};
+
 const onMessage = ({type, payload}, correlationId, replyTo) => {
     console.log(`Received message from RabbitMQ
     Type: ${type}
     Payload: ${JSON.stringify(payload)}`, );
     setTimeout(()=>{
-        console.log('Pub!');
-        rabbit.publish({type: type + '!!!', payload}, correlationId, replyTo);
+        if(!api[type]) {
+            rabbit.publish({error: `DB has no such RPC method (${type})`}, correlationId, replyTo);
+        }
+        api[type](payload).then(data=>rabbit.publish(data, correlationId, replyTo));
     }, 100);
-
 };
 
 /**
@@ -33,7 +38,7 @@ const connectToDb = () =>
  * Creates data models in DB
  * @param [withClear] If true, this will purge the data in the DB.
  */
-createModels = (withClear = true) => { //TODO: Change withClear to `false` when ready for production
+createModels = (withClear = false) => {
     models.source = sequelize.define('source', {
         url: {
             type: Sequelize.STRING,

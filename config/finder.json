@@ -2,6 +2,7 @@
   "webmthread": {
     "finder": {
       "catalog": "https://2ch.hk/b/catalog_num.json",
+      "updateTimeout": 60000,
       "threadParseInterval": 5000
     },
     "rabbitMQ": {

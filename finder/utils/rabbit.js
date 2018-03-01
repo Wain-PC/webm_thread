@@ -96,7 +96,7 @@ const publish = (payloadObj) => {
 //TODO: Rewrite using memcached
 const requests = {};
 
-const dbRequest = (type, payload) => {
+const dbRequest = (type, payload = {}) => {
     const {dbRequests} = config.exchanges;
     if (!channelPromise) {
         return Promise.reject(new Error('No RabbitMQ connection available to publish'));

@@ -2,14 +2,15 @@ const request = require('request-promise-native');
 const rabbit = require('./utils/rabbit');
 const config = require('config').get('webmthread');
 
-const catalogUrl = config.finder.catalog;
 const webmRegExp = /WEBM|ВЕБМ|ШЕБМ|ШЕВМ|MP4|МР4/i;
 const onMessage = (message) => {
     console.log("Received message from RabbitMQ:", message);
 };
 
-const loadThreads = () => {
-    console.log('Loading threads list');
+const loadSources = () => rabbit.dbRequest('getSources');
+
+const loadThreads = (catalogUrl) => {
+    console.log(`Loading threads list from ${catalogUrl}`);
     return request({
         method: 'GET',
         uri: catalogUrl,
@@ -40,11 +41,16 @@ const loadThreads = () => {
         });
 };
 
+const work = () => loadSources().then(sources => sources.map(({url}) => loadThreads(url)));
+const start = () => work()
+    .then(()=>
+        setTimeout(work, config.finder.updateTimeout)
+    );
 
 console.log("Starting Rabbit connection!");
 rabbit.connect(onMessage).then(function () {
     console.log("RabbitMQ Connection established");
-    loadThreads();
+    start();
 }, (err) => {
     console.log("RabbitMQ Connection errored with", err);
 });
