@@ -44,9 +44,9 @@ const connectToDb = () =>
 
 /**
  * Creates data models in DB
- * @param [withClear] If true, this will purge the data in the DB.
+ * @param [force] If true, this will purge the data in the DB.
  */
-createModels = (withClear = false) => {
+createModels = (force = false) => {
     models.source = sequelize.define('source', {
         url: {
             type: Sequelize.STRING,
@@ -86,7 +86,7 @@ createModels = (withClear = false) => {
 
     return Promise
         .all(Object.keys(models)
-            .map(key => models[key].sync({force: (withClear)})))
+            .map(key => models[key].sync({force})))
         .then(() => models);
 };
 
