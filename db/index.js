@@ -29,20 +29,23 @@ const connectToDb = () =>
  * @param [withClear] If true, this will purge the data in the DB.
  */
 createModels = (withClear = true) => { //TODO: Change withClear to `false` when ready for production
-    models.thread = sequelize.define('thread', {
+    models.source = sequelize.define('source', {
         url: {
             type: Sequelize.STRING,
             primaryKey: true,
             allowNull: false
         },
-        source: {
+        description: {
             type: Sequelize.STRING,
-        },
-        boardId: {
-            type: Sequelize.INTEGER,
-        },
-        threadId: {
-            type: Sequelize.INTEGER,
+        }
+    });
+
+
+    models.thread = sequelize.define('thread', {
+        url: {
+            type: Sequelize.STRING,
+            primaryKey: true,
+            allowNull: false
         }
     });
 
@@ -60,7 +63,8 @@ createModels = (withClear = true) => { //TODO: Change withClear to `false` when 
         }
     });
 
-    models.thread.hasMany(models.thread, {onDelete: 'cascade'});
+    models.source.hasMany(models.thread, {onDelete: 'cascade'});
+    models.thread.hasMany(models.video, {onDelete: 'cascade'});
 
     return Promise
         .all(Object.keys(models)
