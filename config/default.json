@@ -6,7 +6,10 @@
       "port": 5672,
       "username": "guest",
       "password": "guest",
-      "exchanges": {},
+      "exchanges": {
+        "dbRequests": "DB.Requests",
+        "dbResponses": "DB.Responses"
+      },
       "routingKey": ""
     }
   }

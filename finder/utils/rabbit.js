@@ -7,12 +7,11 @@ const config = require('config').get('webmthread').get('rabbitMQ');
 let channelPromise;
 const channelRoutingKey = uuid();
 
-const subscribeToExchange = (channel, callback) => {
-    const {subscribe} = config.exchanges;
-    channel.assertExchange(subscribe, 'fanout');
+const subscribeToExchange = (channel, exchangeName, callback) => {
+    channel.assertExchange(exchangeName, 'fanout');
     channel.assertQueue(null, {durable: false, autoDelete: true})
         .then(({queue}) => {
-            channel.bindQueue(queue, subscribe, channelRoutingKey);
+            channel.bindQueue(queue, exchangeName, channelRoutingKey);
             channel.consume(queue, callback, {noAck: true});
             return channel;
         });
@@ -20,7 +19,7 @@ const subscribeToExchange = (channel, callback) => {
 
 const connectionInitialize = (url) => amqp.connect(url)
     .catch((err) => new Promise(resolve => {
-        console.log(`Rabbit is unavailable (${err}), waiting to try again in ${config.reconnectTimeout/1000} seconds `);
+        console.log(`Rabbit is unavailable (${err}), waiting to try again in ${config.reconnectTimeout / 1000} seconds `);
         setTimeout(() => resolve(connectionInitialize(url)), config.reconnectTimeout);
     }));
 
@@ -42,7 +41,8 @@ const connect = (onMessage = () => {
             return connection.createChannel();
         })
         .then(channel => {
-            const {publish, subscribe} = config.exchanges;
+            const {publish, subscribe, dbRequests, dbResponses} = config.exchanges;
+            const promiseArray = [];
             console.log("Got channel");
             if (publish) {
                 console.log(`Found publish ability to exchange ${publish}, creating exchange...`);
@@ -50,12 +50,23 @@ const connect = (onMessage = () => {
             }
             if (subscribe) {
                 console.log(`Found subscription to exchange ${subscribe}, subscribing...`);
-                return subscribeToExchange(channel, (message) => {
+                promiseArray.push(subscribeToExchange(channel, subscribe, (message) => {
                     const {content} = message;
                     onMessage(JSON.parse(content.toString("utf-8")));
-                });
+                }));
             }
-            return channel;
+            if (dbRequests && dbResponses) {
+                console.log(`Found subscription to exchange ${dbResponses}, subscribing...`);
+                promiseArray.push(subscribeToExchange(channel, dbResponses, (message) => {
+                    const {content, properties: {correlationId}} = message;
+                    if (requests[correlationId]) {
+                        const {resolve} = requests[correlationId];
+                        resolve(JSON.parse(content.toString("utf-8")));
+                        delete requests[correlationId];
+                    }
+                }));
+            }
+            return Promise.all(promiseArray).then(()=>channel);
         });
     return channelPromise;
 };
@@ -80,5 +91,27 @@ const publish = (payloadObj) => {
         })).catch(err => console.error(err));
 };
 
+const requests = {};
+
+const dbRequest = (type, payload) => {
+    const {dbRequests} = config.exchanges;
+    if (!channelPromise) {
+        return Promise.reject(new Error('No RabbitMQ connection available to publish'));
+    }
+
+    return new Promise((resolve, reject) => {
+        const correlationId = uuid();
+        requests[correlationId] = {resolve, reject};
+        channelPromise
+            .then(channel => channel.publish(dbRequests, config.routingKey, new Buffer(JSON.stringify({type, payload})), {
+                deliveryMode: 2,
+                contentType: 'application/json',
+                replyTo: channelRoutingKey,
+                correlationId,
+            })).catch(err => console.error(err));
+    });
+};
+
 module.exports.publish = publish;
 module.exports.connect = connect;
+module.exports.dbRequest = dbRequest;

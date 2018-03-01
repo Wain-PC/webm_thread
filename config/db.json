@@ -18,8 +18,8 @@
     },
     "rabbitMQ": {
       "exchanges": {
-        "subscribe": "Db.Requests",
-        "publish": "Db.Responses"
+        "subscribe": "DB.Requests",
+        "publish": "DB.Responses"
       },
       "routingKey": "Db"
     }
