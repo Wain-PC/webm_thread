@@ -1,20 +1,13 @@
 const Sequelize = require("sequelize");
 const rabbit = require('./utils/rabbit');
 const config = require('config').get('webmthread');
-
-const api = (models, type, payload) => {
-    switch (type) {
-        case 'getLatestId': {
-            return thread.max();
-        }
-    }
-};
+const models = {};
+let sequelize;
 
 const onMessage = (models) => ({type, payload}) => {
     console.log(`Received message from RabbitMQ
     Type: ${type}
     Payload: ${JSON.stringify(payload)}`, );
-    return api(models, type, payload).then(result => rabbit.publish(result));
 };
 
 /**
@@ -33,35 +26,58 @@ const connectToDb = () =>
 
 /**
  * Creates data models in DB
- * @param sequelize Sequelize instance.
  * @param [withClear] If true, this will purge the data in the DB.
  */
-createModels = (sequelize, withClear = false) => {
-    const models = {};
+createModels = (withClear = true) => { //TODO: Change withClear to `false` when ready for production
     models.thread = sequelize.define('thread', {
-        id: {
-            type: Sequelize.INTEGER,
+        url: {
+            type: Sequelize.STRING,
             primaryKey: true,
             allowNull: false
         },
-        files: {
+        source: {
+            type: Sequelize.STRING,
+        },
+        boardId: {
             type: Sequelize.INTEGER,
-            defaultValue: 0
+        },
+        threadId: {
+            type: Sequelize.INTEGER,
         }
     });
 
-    return Promise.all(Object.keys(models).map(key => models[key].sync({force: (withClear)})));
+    models.video = sequelize.define('video', {
+        url: {
+            type: Sequelize.STRING,
+            primaryKey: true,
+            allowNull: false
+        },
+        thumbnailUrl: {
+            type: Sequelize.STRING
+        },
+        displayName: {
+            type: Sequelize.STRING
+        }
+    });
+
+    models.thread.hasMany(models.thread, {onDelete: 'cascade'});
+
+    return Promise
+        .all(Object.keys(models)
+        .map(key => models[key].sync({force: (withClear)})))
+        .then(()=>models);
 };
 
 console.log("Starting Rabbit connection!");
 connectToDb()
     .then(sequelizeInstance => {
         console.log("DB Connection instantiated");
-        return createModels(sequelizeInstance);
+        sequelize = sequelizeInstance;
+        createModels(sequelizeInstance);
+        return rabbit.connect(onMessage);
     })
-    .then(sequelizeInstance => rabbit.connect(onMessage(sequelizeInstance)))
     .then(() => {
-        console.log("RabbitMQ Connection established");
+        console.log("RabbitMQ and DB Connection established");
     }, (err) => {
         console.log("RabbitMQ Connection errored with", err);
     });
