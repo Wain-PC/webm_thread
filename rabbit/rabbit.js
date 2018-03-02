@@ -49,8 +49,8 @@ const connect = (onMessage) => {
             if (subscribe) {
                 console.log(`Found subscription to exchange ${subscribe}, subscribing...`);
                 promiseArray.push(subscribeToExchange(channel, subscribe, (message) => {
-                    const {content} = message;
-                    onMessage && onMessage(JSON.parse(content.toString("utf-8")));
+                    const {content, properties: {correlationId, replyTo}} = message;
+                    onMessage && onMessage(JSON.parse(content.toString("utf-8")), correlationId, replyTo);
                 }));
             }
             if (dbRequests && dbResponses) {
