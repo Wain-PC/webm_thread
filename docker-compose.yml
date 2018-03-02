@@ -11,6 +11,14 @@ services:
      - rabbitmq:/var/lib/rabbitmq
     networks:
       - webmthread
+  mongo:
+    image: "mongo:latest"
+    ports:
+     - "27017:27017"
+    volumes:
+     - db:/data/db
+    networks:
+      - webmthread
   finder:
     build:
      context: .
@@ -19,6 +27,7 @@ services:
       - webmthread
     depends_on:
       - rabbitmq
+      - db
   db:
     build:
      context: .
@@ -27,8 +36,7 @@ services:
       - webmthread
     depends_on:
       - rabbitmq
-    volumes:
-      - db:/app/db
+      - mongo
 volumes:
   rabbitmq:
   db:
