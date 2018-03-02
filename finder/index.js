@@ -4,12 +4,7 @@ const config = require('config').get('webmthread');
 const domain = config.finder.domain;
 
 const webmRegExp = /WEBM|ВЕБМ|ШЕБМ|ШЕВМ|MP4|МР4/i;
-const onMessage = (message) => {
-    console.log("Received message from RabbitMQ:", message);
-};
-
 const loadSources = () => rabbit.dbRequest('addSource', {url: config.finder.catalog});
-
 const loadThreads = (sourceUrl) => {
     console.log(`Loading threads list from ${sourceUrl}`);
     return request({
@@ -44,7 +39,6 @@ const loadThreads = (sourceUrl) => {
 
         });
 };
-
 const loadVideos = (url) =>
     request({
         method: 'GET',
@@ -76,7 +70,7 @@ const start = () => work()
     );
 
 console.log("Starting Rabbit connection!");
-rabbit.connect(onMessage).then(function () {
+rabbit.connect().then(function () {
     console.log("RabbitMQ Connection established");
     start();
 }, (err) => {

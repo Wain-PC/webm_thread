@@ -23,8 +23,7 @@ const connectionInitialize = (url) => amqp.connect(url)
         setTimeout(() => resolve(connectionInitialize(url)), config.reconnectTimeout);
     }));
 
-const connect = (onMessage = () => {
-}) => {
+const connect = () => {
     const {
         username, password, hostname, port,
     } = config;
@@ -41,20 +40,8 @@ const connect = (onMessage = () => {
             return connection.createChannel();
         })
         .then(channel => {
-            const {publish, subscribe, dbRequests, dbResponses} = config.exchanges;
+            const {dbRequests, dbResponses} = config.exchanges;
             const promiseArray = [];
-            console.log("Got channel");
-            if (publish) {
-                console.log(`Found publish ability to exchange ${publish}, creating exchange...`);
-                channel.assertExchange(publish, 'fanout');
-            }
-            if (subscribe) {
-                console.log(`Found subscription to exchange ${subscribe}, subscribing...`);
-                promiseArray.push(subscribeToExchange(channel, subscribe, (message) => {
-                    const {content} = message;
-                    onMessage(JSON.parse(content.toString("utf-8")));
-                }));
-            }
             if (dbRequests && dbResponses) {
                 console.log(`Found subscription to exchange ${dbResponses}, subscribing...`);
                 promiseArray.push(subscribeToExchange(channel, dbResponses, (message) => {
@@ -83,26 +70,6 @@ const connect = (onMessage = () => {
             return Promise.all(promiseArray).then(() => channel);
         });
     return channelPromise;
-};
-
-const publish = (payloadObj) => {
-    const {publish} = config.exchanges;
-    if (!channelPromise) {
-        return Promise.reject(new Error('No RabbitMQ connection available to publish'));
-    }
-    if (!publish) {
-        return Promise.reject(new Error('No `publish` exchange set in config, nowhere to publish the message.'));
-    }
-
-    const correlationId = uuid();
-
-    return channelPromise
-        .then(channel => channel.publish(publish, config.routingKey, new Buffer(JSON.stringify(payloadObj)), {
-            deliveryMode: 2,
-            contentType: 'application/json',
-            replyTo: channelRoutingKey,
-            correlationId,
-        })).catch(err => console.error(err));
 };
 
 //TODO: Rewrite using memcached
@@ -137,6 +104,5 @@ const dbRequest = (type, payload = {}) => {
     });
 };
 
-module.exports.publish = publish;
 module.exports.connect = connect;
 module.exports.dbRequest = dbRequest;
