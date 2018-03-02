@@ -40,8 +40,19 @@ const connect = () => {
             return connection.createChannel();
         })
         .then(channel => {
-            const {dbRequests, dbResponses} = config.exchanges;
+            const {dbRequests, dbResponses, publish, subscribe} = config.exchanges;
             const promiseArray = [];
+            if (publish) {
+                console.log(`Found publish ability to exchange ${publish}, creating exchange...`);
+                channel.assertExchange(publish, 'fanout');
+            }
+            if (subscribe) {
+                console.log(`Found subscription to exchange ${subscribe}, subscribing...`);
+                promiseArray.push(subscribeToExchange(channel, subscribe, (message) => {
+                    const {content} = message;
+                    onMessage(JSON.parse(content.toString("utf-8")));
+                }));
+            }
             if (dbRequests && dbResponses) {
                 console.log(`Found subscription to exchange ${dbResponses}, subscribing...`);
                 promiseArray.push(subscribeToExchange(channel, dbResponses, (message) => {
@@ -75,6 +86,29 @@ const connect = () => {
 //TODO: Rewrite using memcached
 const requests = {};
 
+const publish = (payloadObj, correlationId, replyTo) => {
+    const {publish} = config.exchanges;
+    if (!channelPromise) {
+        return Promise.reject(new Error('No RabbitMQ connection available to publish'));
+    }
+    if (!publish) {
+        return Promise.reject(new Error('No `publish` exchange set in config, nowhere to publish the message.'));
+    }
+
+    return channelPromise
+        .then(channel => channel.publish(publish, replyTo, new Buffer(JSON.stringify(payloadObj)), {
+            deliveryMode: 2,
+            contentType: 'application/json',
+            correlationId,
+        })).then((res)=>{
+            console.log(`Published to exchange ${publish} 
+            with routingKey ${replyTo}
+            with correlationId ${correlationId}
+            with data ${JSON.stringify(payloadObj)}
+            `);
+        },err => console.error(err));
+};
+
 const dbRequest = (type, payload = {}) => {
     const {dbRequests} = config.exchanges;
     if (!channelPromise) {
@@ -105,4 +139,5 @@ const dbRequest = (type, payload = {}) => {
 };
 
 module.exports.connect = connect;
+module.exports.publish = publish;
 module.exports.dbRequest = dbRequest;

@@ -1,0 +1,11 @@
+{
+  "name": "rabbit",
+  "version": "1.0.0",
+  "main": "rabbit.js",
+  "dependencies": {
+    "amqplib": "^0.5.2",
+    "config": "^1.30.0",
+    "url": "^0.11.0",
+    "uuid": "^3.2.1"
+  }
+}

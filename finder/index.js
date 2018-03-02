@@ -1,5 +1,5 @@
 const request = require('request-promise-native');
-const rabbit = require('./utils/rabbit');
+const rabbit = require('../rabbit');
 const config = require('config').get('webmthread');
 const domain = config.finder.domain;
 
