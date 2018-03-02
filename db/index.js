@@ -6,8 +6,9 @@ let db, collections = {};
 const api = {
     addSource: (source) => collections.sources.updateOne(source, {$set: source}, {upsert: true}),
     addThreads: ({sourceUrl, threads}) => collections.sources.updateOne({url: sourceUrl}, {$set: {threads}}, {upsert: true}),
+    getThreads: ({sourceUrl: url}) => collections.sources.findOne({url}).then(item => item.threads.map(({url})=>({url}))),
+    getThread: ({url}) => collections.sources.findOne({"threads.url": url}),
     removeThread: ({url}) => collections.sources.removeOne({"threads.url": url}),
-    getThreads: ({sourceUrl: url}) => collections.sources.findOne({url}).then(item => item.threads),
     addVideos: ({url, videos}) => collections.sources.updateOne({"threads.url": url}, {$set: { "threads.$.videos": videos}}),
 };
 
