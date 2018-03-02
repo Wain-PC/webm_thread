@@ -78,6 +78,14 @@ querystring@0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/querystring/-/querystring-0.2.0.tgz#b209849203bb25df820da756e747005878521620"
 
+"rabbit@file:../rabbit":
+  version "1.0.0"
+  dependencies:
+    amqplib "^0.5.2"
+    config "^1.30.0"
+    url "^0.11.0"
+    uuid "^3.2.1"
+
 "readable-stream@1.x >=1.1.9":
   version "1.1.14"
   resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-1.1.14.tgz#7cf4c54ef648e3813084c636dd2079e166c081d9"

@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "main": "db.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node"
   },
   "dependencies": {
     "config": "^1.30.0",
-    "mongodb": "^3.0.3"
+    "mongodb": "^3.0.3",
+    "rabbit": "file:../rabbit"
   }
 }

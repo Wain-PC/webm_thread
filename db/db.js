@@ -1,5 +1,5 @@
 const MongoClient = require('mongodb').MongoClient;
-const rabbit = require('../rabbit');
+const rabbit = require('rabbit');
 const config = require('config').get('webmthread');
 let db, collections = {};
 

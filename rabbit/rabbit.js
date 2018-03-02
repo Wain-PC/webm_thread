@@ -23,7 +23,7 @@ const connectionInitialize = (url) => amqp.connect(url)
         setTimeout(() => resolve(connectionInitialize(url)), config.reconnectTimeout);
     }));
 
-const connect = () => {
+const connect = (onMessage) => {
     const {
         username, password, hostname, port,
     } = config;
@@ -50,7 +50,7 @@ const connect = () => {
                 console.log(`Found subscription to exchange ${subscribe}, subscribing...`);
                 promiseArray.push(subscribeToExchange(channel, subscribe, (message) => {
                     const {content} = message;
-                    onMessage(JSON.parse(content.toString("utf-8")));
+                    onMessage && onMessage(JSON.parse(content.toString("utf-8")));
                 }));
             }
             if (dbRequests && dbResponses) {
@@ -100,13 +100,13 @@ const publish = (payloadObj, correlationId, replyTo) => {
             deliveryMode: 2,
             contentType: 'application/json',
             correlationId,
-        })).then((res)=>{
+        })).then((res) => {
             console.log(`Published to exchange ${publish} 
             with routingKey ${replyTo}
             with correlationId ${correlationId}
             with data ${JSON.stringify(payloadObj)}
             `);
-        },err => console.error(err));
+        }, err => console.error(err));
 };
 
 const dbRequest = (type, payload = {}) => {
@@ -118,7 +118,7 @@ const dbRequest = (type, payload = {}) => {
     return new Promise((resolve, reject) => {
         const correlationId = uuid();
         channelPromise
-            .then(channel => channel.publish(dbRequests, config.routingKey, new Buffer(JSON.stringify({
+            .then(channel => channel.publish(dbRequests, "", new Buffer(JSON.stringify({
                 type,
                 payload
             })), {

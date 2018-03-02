@@ -1,12 +1,14 @@
 {
   "name": "finder",
   "version": "1.0.0",
+  "main": "finder.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node"
   },
   "dependencies": {
     "config": "^1.30.0",
     "request": "^2.83.0",
-    "request-promise-native": "^1.0.5"
+    "request-promise-native": "^1.0.5",
+    "rabbit": "file:../rabbit"
   }
 }
