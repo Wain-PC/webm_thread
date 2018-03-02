@@ -1,15 +1,10 @@
 {
   "webmthread": {
     "finder": {
+      "domain": "https://2ch.hk",
       "catalog": "https://2ch.hk/b/catalog_num.json",
       "updateTimeout": 60000,
       "threadParseInterval": 5000
-    },
-    "rabbitMQ": {
-      "exchanges": {
-        "publish": "Finder"
-      },
-      "routingKey": "Finder"
     }
   }
 }

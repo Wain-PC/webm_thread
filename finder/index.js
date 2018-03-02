@@ -34,11 +34,40 @@ const loadThreads = (sourceUrl) => {
     // (value taken from config).
         .then(webmThreads => {
             webmThreads.map((thread, i) => setTimeout(() => {
-                console.log(`Pushing thread ${thread.threadId} to Parser`);
-                rabbit.publish(thread);
+                console.log(`Pushing thread ${thread.threadId} to loadVideos`);
+                loadVideos(thread);
             }, config.finder.threadParseInterval * i));
 
         });
+};
+
+const loadVideos = ({boardId, threadId, sourceUrl}) => {
+    const domain = config.finder.domain;
+    const threadUrl = `${domain}/${boardId}/res/${threadId}.json`;
+    rabbit.dbRequest('saveThread',{url: threadUrl, sourceUrl}).then(()=>{
+        console.log(`Thread created, loading videos from URL ${threadUrl}`);
+        return request({
+            method: 'GET',
+            uri: threadUrl,
+            json: true
+        }).then(({threads}) => {
+            const videos = threads[0].posts
+                .reduce((filesArray, {files}) =>
+                    filesArray.concat(files.filter(({fullname}) =>
+                        webmRegExp.test(fullname)).map(
+                        ({displayname: displayName, path, thumbnail}) => ({
+                            url: domain + path,
+                            displayName,
+                            thumbnailUrl: domain + thumbnail
+                        }))), []);
+            console.log(`Total videos in this thread: ${videos.length}`);
+            rabbit.dbRequest('saveVideos', {threadUrl, videos});
+        }, ({statusCode}) => {
+            if (statusCode === 404) {
+                console.error(`Thread ${boardId}/${threadId} not found, skipping`);
+            }
+        });
+    });
 };
 
 const work = () => loadSources().then(sources => sources.map(({url}) => loadThreads(url)));

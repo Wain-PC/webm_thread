@@ -6,7 +6,7 @@ const models = {};
 let sequelize;
 
 const api = {
-    getSources: () => models.source.findAll({attributes: ['url', 'description']}),
+    getSources: () => Promise.resolve([{url: 'https://2ch.hk/b/catalog_num.json', description: '2ch WEBM Threads'}]),
     saveThread: thread => models.thread.findOrCreate({where: {url: thread.url}, defaults: thread}),
     saveVideos: ({threadUrl, videos}) => models.thread.findOne({
         where: {
