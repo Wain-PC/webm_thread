@@ -1,0 +1,7 @@
+{
+  "webmthread": {
+    "api": {
+      "port": 8080
+    }
+  }
+}
