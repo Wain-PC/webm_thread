@@ -1,0 +1,4 @@
+src/semanticUI/**
+src/stories/**
+src/registerServiceWorker.js
+/server/
