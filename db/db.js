@@ -4,7 +4,7 @@ const config = require('config').get('webmthread');
 let db, collections = {};
 
 const api = {
-    getSources: (source) => collections.sources.find()
+    getSources: () => collections.sources.find()
         .project({ threads: 0, _id: 0 })
         .toArray(),
     addSource: (source) => collections.sources.updateOne(source, {$set: source}, {upsert: true}),
