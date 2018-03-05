@@ -1,6 +1,9 @@
 import React from 'react';
 import {Grid, Menu} from 'semantic-ui-react';
 import SourcesList from '../components/SourcesList/SourcesList';
+import {Switch, Route} from 'react-router-dom';
+import NotFound from "./NotFound";
+import ThreadsList from "../components/ThreadsList/ThreadsList";
 
 
 const DefaultView = () => (
@@ -12,7 +15,7 @@ const DefaultView = () => (
     </Menu>
     <Grid padded="horizontally" style={{paddingTop: '4em'}} verticalAlign="middle">
       <Grid.Column width={16}>
-        {/*List of videos here*/}
+        <ThreadsList sourceUrl="https://2ch.hk/b/catalog_num.json"/>
       </Grid.Column>
     </Grid>
   </div>
