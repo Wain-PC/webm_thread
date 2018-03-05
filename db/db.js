@@ -12,7 +12,8 @@ const api = {
         .then(()=>collections.sources.findOne({url: source.url}, {threads: 0})),
     addThreads: ({sourceId, threads}) => collections.sources.updateOne({_id: ObjectId(sourceId)}, {$set: {threads}}, {upsert: true}),
     getThreads: ({sourceId}) => collections.sources.findOne({_id: ObjectId(sourceId)}).then(item => item.threads.map(({videos, ...rest})=>rest)),
-    getThread: ({url}) => collections.sources.findOne({"threads.url": url}),
+    getThread: ({sourceId, threadId}) => collections.sources.findOne({_id: ObjectId(sourceId), "threads.id": +threadId}, {threads: 1})
+        .then(({threads})=>threads.filter(t=>t.id === +threadId)[0]),
     removeThread: ({url}) => collections.sources.removeOne({"threads.url": url}),
     addVideos: ({url, videos}) => collections.sources.updateOne({"threads.url": url}, {$set: { "threads.$.videos": videos}}),
 };

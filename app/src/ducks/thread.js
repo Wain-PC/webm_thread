@@ -7,7 +7,7 @@ const GET_THREAD_ERROR = 'clientui/user/GET_THREAD_ERROR';
 
 const initialState = {
   loading: false,
-  thread: [],
+  thread: {},
 };
 
 // Reducer
@@ -40,9 +40,9 @@ const getThreadSuccess = thread => ({ type: GET_THREAD_SUCCESS, payload: thread 
 const getThreadError = () => ({ type: GET_THREAD_ERROR });
 
 /* Thunks action creators */
-const get = url => (dispatch) => {
+const get = (sourceId, threadId) => (dispatch) => {
   dispatch(getThreadStart());
-  return request('/thread', {url})
+  return request('/thread', {sourceId, threadId})
     .then(
       (thread) => {
         dispatch(getThreadSuccess(thread));
