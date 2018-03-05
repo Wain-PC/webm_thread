@@ -7,7 +7,7 @@ const api = {
     getSources: () => collections.sources.find()
         .project({ threads: 0, _id: 0 })
         .toArray(),
-    addSource: (source) => collections.sources.updateOne(source, {$set: source}, {upsert: true}),
+    addSource: (source) => collections.sources.updateOne({url: source.url}, {$set: source}, {upsert: true}),
     addThreads: ({sourceUrl, threads}) => collections.sources.updateOne({url: sourceUrl}, {$set: {threads}}, {upsert: true}),
     getThreads: ({sourceUrl: url}) => collections.sources.findOne({url}).then(item => item.threads.map(({url})=>({url}))),
     getThread: ({url}) => collections.sources.findOne({"threads.url": url}),
