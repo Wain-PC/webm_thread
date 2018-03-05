@@ -34,7 +34,6 @@ class SourcesList extends React.Component {
         options={sourcesList}
         selectOnNavigation={false}
         onChange={this.handleChange}
-        {...props}
       />
     );
   }

@@ -15,7 +15,6 @@ import thread from './ducks/thread';
 import './semantic-ui/dist/semantic.min.css';
 /* Views used in routing */
 import DefaultView from './views/DefaultView';
-import ConfigView from './views/ConfigView';
 import NotFound from './views/NotFound';
 
 const reducer = combineReducers({routing, sources, threads, thread});
@@ -31,8 +30,7 @@ const App = () => (
   <Provider store={store}>
       <ConnectedRouter history={history}>
         <Switch>
-          <Route path="/" component={ConfigView}/>
-          <Route path="/:id/:domain" exact component={ConfigView}/>
+          <Route path="/" component={DefaultView}/>
           <Route component={NotFound}/>
         </Switch>
       </ConnectedRouter>
