@@ -4,7 +4,7 @@ const config = require('config').get('webmthread');
 const domain = config.finder.domain;
 
 const webmRegExp = /WEBM|ВЕБМ|ШЕБМ|ШЕВМ|MP4|МР4/i;
-const loadSources = () => rabbit.dbRequest('addSource', {url: config.finder.catalog, displayName: '2ch.hk/b'});
+const loadSources = () => rabbit.dbRequest('addSource', {url: config.finder.catalog, displayName: config.finder.displayName});
 const loadThreads = ({url: sourceUrl, _id}) => {
     console.log(`Loading threads list from ${sourceUrl} (ID: ${_id})`);
     return request({
@@ -15,7 +15,7 @@ const loadThreads = ({url: sourceUrl, _id}) => {
         const {num, subject, comment, posts_count, files_count} = thread;
         const subjComment = `${subject} ${comment}`;
         if (webmRegExp.test(subjComment)) {
-            const url = `${domain}/b/res/${num}.json`;
+            const url = domain + config.finder.threadUrl.replace(/\${(\w+?)}/g, (match, p1) => thread[p1]);
             console.log(`Found WEBM thread with
                 URL: ${url}
                 Subject: ${subject}
@@ -32,14 +32,14 @@ const loadThreads = ({url: sourceUrl, _id}) => {
         // Do not send all videos at once to prevent backend overload. Send one thread every N seconds
         // (value taken from config).
         .then(webmThreads => {
-            webmThreads.map(({url}, i) => setTimeout(() => {
+            webmThreads.map(({url, id}, i) => setTimeout(() => {
                 console.log(`Pushing thread ${url} to loadVideos`);
-                loadVideos(url);
+                loadVideos(_id, id, url);
             }, config.finder.threadParseInterval * i));
 
         });
 };
-const loadVideos = (url) =>
+const loadVideos = (sourceId, threadId, url) =>
     request({
         method: 'GET',
         uri: url,
@@ -54,12 +54,16 @@ const loadVideos = (url) =>
                         displayName,
                         thumbnailUrl: domain + thumbnail
                     }))), []);
-        console.log(`Total videos in this thread: ${videos.length}`);
-        rabbit.dbRequest('addVideos', {url, videos});
+        console.log(`Total videos in thread ${threadId}: ${videos.length}`);
+        if(videos.length < config.finder.minVideosInThread) {
+            console.error(`Thread ${threadId} has too low videos, skipping (limit: ${config.finder.minVideosInThread}`);
+            return rabbit.dbRequest('removeThread', {sourceId, threadId});
+        }
+        return rabbit.dbRequest('addVideos', {url, videos});
     }, ({statusCode}) => {
         if (statusCode === 404) {
-            console.error(`Thread ${url} not found, skipping`);
-            rabbit.dbRequest('removeThread', {url});
+            console.error(`Thread ${threadId} not found, skipping`);
+            return rabbit.dbRequest('removeThread', {sourceId, threadId});
         }
     });
 
