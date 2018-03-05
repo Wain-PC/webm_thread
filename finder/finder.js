@@ -4,7 +4,7 @@ const config = require('config').get('webmthread');
 const domain = config.finder.domain;
 
 const webmRegExp = /WEBM|ВЕБМ|ШЕБМ|ШЕВМ|MP4|МР4/i;
-const loadSources = () => rabbit.dbRequest('addSource', {url: config.finder.catalog});
+const loadSources = () => rabbit.dbRequest('addSource', {url: config.finder.catalog, displayName: '2ch.hk/b'});
 const loadThreads = (sourceUrl) => {
     console.log(`Loading threads list from ${sourceUrl}`);
     return request({
@@ -23,7 +23,7 @@ const loadThreads = (sourceUrl) => {
                 Posts: ${posts_count}
                 Files: ${files_count}
                 `);
-            webmThreads.push({url});
+            webmThreads.push({url, subject, comment, postsCount: posts_count, filesCount: files_count});
         }
         return webmThreads;
     }, []))
