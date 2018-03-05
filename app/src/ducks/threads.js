@@ -40,9 +40,9 @@ const getThreadsSuccess = threads => ({ type: GET_THREADS_SUCCESS, payload: thre
 const getThreadsError = () => ({ type: GET_THREADS_ERROR });
 
 /* Thunks action creators */
-const get = sourceUrl => (dispatch) => {
+const get = sourceId => (dispatch) => {
   dispatch(getThreadsStart());
-  return request('/threads', {sourceUrl})
+  return request('/threads', {sourceId})
     .then(
       (threads) => {
         dispatch(getThreadsSuccess(threads));

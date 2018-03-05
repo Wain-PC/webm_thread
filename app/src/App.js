@@ -16,6 +16,7 @@ import './semantic-ui/dist/semantic.min.css';
 /* Views used in routing */
 import DefaultView from './views/DefaultView';
 import NotFound from './views/NotFound';
+import ThreadsView from "./views/ThreadsView";
 
 const reducer = combineReducers({routing, sources, threads, thread});
 const history = createHistory();
@@ -30,7 +31,8 @@ const App = () => (
   <Provider store={store}>
       <ConnectedRouter history={history}>
         <Switch>
-          <Route path="/" component={DefaultView}/>
+          <Route path="/" exact component={DefaultView}/>
+          <Route path="/:sourceId" component={ThreadsView}/>
           <Route component={NotFound}/>
         </Switch>
       </ConnectedRouter>

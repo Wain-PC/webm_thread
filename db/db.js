@@ -1,15 +1,17 @@
 const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require('mongodb').ObjectId;
 const rabbit = require('rabbit');
 const config = require('config').get('webmthread');
 let db, collections = {};
 
 const api = {
     getSources: () => collections.sources.find()
-        .project({ threads: 0, _id: 0 })
+        .project({ _id: 1, displayName: 1 })
         .toArray(),
-    addSource: (source) => collections.sources.updateOne({url: source.url}, {$set: source}, {upsert: true}),
-    addThreads: ({sourceUrl, threads}) => collections.sources.updateOne({url: sourceUrl}, {$set: {threads}}, {upsert: true}),
-    getThreads: ({sourceUrl: url}) => collections.sources.findOne({url}).then(item => item.threads.map(({url})=>({url}))),
+    addSource: (source) => collections.sources.updateOne({url: source.url}, {$set: source}, {upsert: true})
+        .then(()=>collections.sources.findOne({url: source.url}, {threads: 0})),
+    addThreads: ({sourceId, threads}) => collections.sources.updateOne({_id: ObjectId(sourceId)}, {$set: {threads}}, {upsert: true}),
+    getThreads: ({sourceId}) => collections.sources.findOne({_id: ObjectId(sourceId)}).then(item => item.threads.map(({videos, ...rest})=>rest)),
     getThread: ({url}) => collections.sources.findOne({"threads.url": url}),
     removeThread: ({url}) => collections.sources.removeOne({"threads.url": url}),
     addVideos: ({url, videos}) => collections.sources.updateOne({"threads.url": url}, {$set: { "threads.$.videos": videos}}),

@@ -5,8 +5,8 @@ const domain = config.finder.domain;
 
 const webmRegExp = /WEBM|ВЕБМ|ШЕБМ|ШЕВМ|MP4|МР4/i;
 const loadSources = () => rabbit.dbRequest('addSource', {url: config.finder.catalog, displayName: '2ch.hk/b'});
-const loadThreads = (sourceUrl) => {
-    console.log(`Loading threads list from ${sourceUrl}`);
+const loadThreads = ({url: sourceUrl, _id}) => {
+    console.log(`Loading threads list from ${sourceUrl} (ID: ${_id})`);
     return request({
         method: 'GET',
         uri: sourceUrl,
@@ -23,12 +23,12 @@ const loadThreads = (sourceUrl) => {
                 Posts: ${posts_count}
                 Files: ${files_count}
                 `);
-            webmThreads.push({url, subject, comment, postsCount: posts_count, filesCount: files_count});
+            webmThreads.push({id: +num, url, subject, comment, postsCount: posts_count, filesCount: files_count});
         }
         return webmThreads;
     }, []))
-        .then(threads => rabbit.dbRequest('addThreads', {sourceUrl, threads}))
-        .then(() => rabbit.dbRequest('getThreads', {sourceUrl}))
+        .then(threads => rabbit.dbRequest('addThreads', {sourceId: _id, threads}))
+        .then(() => rabbit.dbRequest('getThreads', {sourceId: _id}))
         // Do not send all videos at once to prevent backend overload. Send one thread every N seconds
         // (value taken from config).
         .then(webmThreads => {
@@ -63,7 +63,7 @@ const loadVideos = (url) =>
         }
     });
 
-const work = () => loadSources().then(() => loadThreads(config.finder.catalog));
+const work = () => loadSources().then(loadThreads);
 const start = () => work()
     .then(() =>
         setTimeout(start, config.finder.updateTimeout)
