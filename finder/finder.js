@@ -3,7 +3,7 @@ const rabbit = require('rabbit');
 const config = require('config').get('webmthread');
 const domain = config.finder.domain;
 
-const webmRegExp = /WEBM|ВЕБМ|ШЕБМ|ШЕВМ|MP4|МР4/i;
+const webmRegExp = /WEBM|ВЕБМ|ШЕБМ|ШЕВМ|ЦУИЬ|MP4|МР4/i;
 const loadSources = () => rabbit.dbRequest('addSource', {url: config.finder.catalog, displayName: config.finder.displayName});
 const loadThreads = ({url: sourceUrl, _id}) => {
     console.log(`Loading threads list from ${sourceUrl} (ID: ${_id})`);
