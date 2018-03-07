@@ -82,6 +82,7 @@ const connect = () => {
                             return Promise.resolve(result);
                         })
                 },
+                //TODO: For RPC, Response exchange must be of type 'topic', not 'fanout'. Maybe, other exchanges as well?
                 rpc: (requestExchange, responseExchange) => {
                     return subscribeToExchange(channel, responseExchange, channelRoutingKey, (message) => {
                         const {content, properties: {correlationId}} = message;
