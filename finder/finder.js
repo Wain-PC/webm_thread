@@ -3,8 +3,9 @@ const rabbit = require('rabbit');
 const config = require('config').get('webmthread');
 const domain = config.finder.domain;
 
+let publishFn, rpcFn;
 const webmRegExp = /WEBM|ВЕБМ|ШЕБМ|ШЕВМ|ЦУИЬ|MP4|МР4/i;
-const loadSources = () => rabbit.dbRequest('addSource', {url: config.finder.catalog, displayName: config.finder.displayName});
+const loadSources = () => rpcFn('addSource', {url: config.finder.catalog, displayName: config.finder.displayName});
 const loadThreads = ({url: sourceUrl, _id}) => {
     console.log(`Loading threads list from ${sourceUrl} (ID: ${_id})`);
     return request({
@@ -27,8 +28,8 @@ const loadThreads = ({url: sourceUrl, _id}) => {
         }
         return webmThreads;
     }, []))
-        .then(threads => rabbit.dbRequest('addThreads', {sourceId: _id, threads}))
-        .then(() => rabbit.dbRequest('getThreads', {sourceId: _id}))
+        .then(threads => rpcFn('addThreads', {sourceId: _id, threads}))
+        .then(() => rpcFn('getThreads', {sourceId: _id}))
         // Do not send all videos at once to prevent backend overload. Send one thread every N seconds
         // (value taken from config).
         .then(webmThreads => {
@@ -55,16 +56,16 @@ const loadVideos = (sourceId, threadId, url) =>
                         thumbnailUrl: domain + thumbnail
                     }))), []);
         console.log(`Total videos in thread ${threadId}: ${videos.length}`);
-        videos.forEach(v=>rabbit.publish(v));
+        videos.forEach(v=>publishFn(v));
         if(videos.length < config.finder.minVideosInThread) {
             console.error(`Thread ${threadId} has too low videos, skipping (limit: ${config.finder.minVideosInThread}`);
-            return rabbit.dbRequest('removeThread', {sourceId, threadId});
+            return rpcFn('removeThread', {sourceId, threadId});
         }
-        return rabbit.dbRequest('addVideos', {url, videos});
+        return rpcFn('addVideos', {url, videos});
     }, ({statusCode}) => {
         if (statusCode === 404) {
             console.error(`Thread ${threadId} not found, skipping`);
-            return rabbit.dbRequest('removeThread', {sourceId, threadId});
+            return rpcFn('removeThread', {sourceId, threadId});
         }
     });
 
@@ -75,9 +76,23 @@ const start = () => work()
     );
 
 console.log("Starting Rabbit connection!");
-rabbit.connect().then(function () {
-    console.log("RabbitMQ Connection established");
-    start();
+rabbit.connect().then((rabbitInstance) => {
+    const {publish, dbRequests, dbResponses} = config.rabbitMQ.exchanges;
+    return rabbitInstance.publish(publish)
+        .then(pFn => {
+            publishFn = pFn;
+
+        })
+        .then(()=>{
+            return rabbitInstance.rpc(dbRequests, dbResponses)
+                .then(rFn => {
+                    rpcFn = rFn;
+                })
+        })
+        .then(()=>{
+            console.log("RabbitMQ Connection established");
+            start();
+        })
 }, (err) => {
     console.log("RabbitMQ Connection errored with", err);
 });
