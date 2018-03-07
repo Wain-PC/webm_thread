@@ -1,11 +1,13 @@
 FROM node:9
 
 COPY config /app/config
-COPY ./db/package.json /app/
-COPY ./db/yarn.lock /app/
-WORKDIR /app
+COPY rabbit /app/rabbit
+COPY db/package.json /app/db/
+COPY db/yarn.lock /app/db/
+COPY db/db.js /app/db/
+WORKDIR /app/db
 RUN yarn
-COPY db /app
-ENV NODE_ENV=db
+ENV NODE_ENV "db"
+ENV NODE_CONFIG_DIR "/app/config"
 
-CMD ["node", "index.js"]
+CMD ["node", "db.js"]

@@ -1,11 +1,13 @@
 FROM node:9
 
 COPY config /app/config
-COPY ./finder/package.json /app/
-COPY ./finder/yarn.lock /app/
-WORKDIR /app
+COPY rabbit /app/rabbit
+COPY finder/package.json /app/finder/
+COPY finder/yarn.lock /app/finder/
+COPY finder/finder.js /app/finder/
+WORKDIR /app/finder
 RUN yarn
-COPY finder /app
-ENV NODE_ENV=finder
+ENV NODE_ENV "finder"
+ENV NODE_CONFIG_DIR "/app/config"
 
-CMD ["node", "index.js"]
+CMD ["node", "finder.js"]
