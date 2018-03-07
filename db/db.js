@@ -19,17 +19,17 @@ const api = {
     addVideos: ({url, videos}) => collections.sources.updateOne({"threads.url": url}, {$set: { "threads.$.videos": videos}}),
 };
 
-const onMessage = ({type, payload}, correlationId, replyTo) => {
+const onMessage = publish => ({type, payload}, correlationId, replyTo) => {
     console.log(`Received message from RabbitMQ
     Type: ${type}
     Payload: ${JSON.stringify(payload)}`,);
     setTimeout(() => {
         if (typeof api[type] !== 'function') {
-            return rabbit.publish({error: `DB has no such RPC method (${type})`}, correlationId, replyTo);
+            return publish({error: `DB has no such RPC method (${type})`}, correlationId, replyTo);
         }
         return api[type](payload).then(
-            data => rabbit.publish(data, correlationId, replyTo),
-            ({message}) => rabbit.publish({error: message}, correlationId, replyTo));
+            data => publish(data, correlationId, replyTo),
+            ({message}) => publish({error: message}, correlationId, replyTo));
     }, 100);
 };
 
@@ -54,9 +54,13 @@ const connectToDb = () => {
 
 console.log("Starting Rabbit connection!");
 connectToDb()
-    .then(() => rabbit.connect(onMessage))
-    .then(() => {
-        console.log("RabbitMQ and DB Connection established");
+    .then(() => rabbit.connect())
+    .then((rabbitInstance) => {
+        const {subscribe, publish} = config.rabbitMQ.exchanges;
+        console.log("DB Connection established");
+        return rabbitInstance.publish(publish)
+            .then(publishFn => rabbitInstance.subscribe(subscribe, onMessage(publishFn)))
+            .then(()=>console.log("RabbitMQ Connection established"));
     }, (err) => {
         console.log("RabbitMQ Connection errored with", err);
     });
