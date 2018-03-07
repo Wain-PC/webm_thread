@@ -1,6 +1,6 @@
 version: '3'
 services:
-  rabbitmq:
+  rabbit:
     image: "rabbitmq:3-management"
     ports:
      - "5672:5672"
@@ -24,7 +24,7 @@ services:
     networks:
       - webmthread
     depends_on:
-      - rabbitmq
+      - rabbit
       - db
   db:
     build:
@@ -33,7 +33,7 @@ services:
     networks:
       - webmthread
     depends_on:
-      - rabbitmq
+      - rabbit
       - mongo
 volumes:
   rabbitmq:
