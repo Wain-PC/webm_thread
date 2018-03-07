@@ -67,22 +67,23 @@ const connect = () => {
                 },
                 publish: (exchangeName, exchangeType = 'fanout') => {
                     return channel.assertExchange(exchangeName, exchangeType)
-                        .then(() => (payload, routingKey = '', correlationId = uuid(), replyTo = '') => {
-                            channel.publish(exchangeName, routingKey, new Buffer(JSON.stringify(payload)), {
+                        .then(() => (payload, correlationId = uuid(), replyTo = '', routingKey = channelRoutingKey) => {
+                            const result = channel.publish(exchangeName, routingKey, new Buffer(JSON.stringify(payload)), {
                                 deliveryMode: 2,
                                 contentType: 'application/json',
                                 correlationId,
                                 replyTo
-                            }).then(() => {
-                                console.log(`Published to exchange ${exchangeName} (type '${exchangeType}') 
+                            });
+                            console.log(`Published to exchange ${exchangeName} (type '${exchangeType}') 
                                             with routingKey ${routingKey}
                                             with correlationId ${correlationId}
-                                            with data ${JSON.stringify(payload)}`);
-                            })
+                                            with data ${JSON.stringify(payload)}
+                                            with result ${result}`);
+                            return Promise.resolve(result);
                         })
                 },
                 rpc: (requestExchange, responseExchange) => {
-                    return subscribeToExchange(channel, requestExchange, channelRoutingKey, (message) => {
+                    return subscribeToExchange(channel, responseExchange, channelRoutingKey, (message) => {
                         const {content, properties: {correlationId}} = message;
                         console.log(`Received RPC response with corrId ${correlationId}`);
                         if (requests[correlationId]) {
@@ -103,21 +104,21 @@ const connect = () => {
                             delete requests[correlationId];
                         }
                     })
-                        .then(() => retObj.publish(responseExchange, 'topic'))
+                        .then(() => retObj.publish(requestExchange, 'fanout'))
                         .then((publishFn) => (method, payload) => {
-                                    return new Promise((resolve, reject) => {
-                                        const correlationId = uuid();
-                                        publishFn(payload, '', correlationId, channelRoutingKey)
-                                            .then(
-                                                () => {
-                                                    requests[correlationId] = {resolve, reject};
-                                                },
-                                                (err) => {
-                                                    delete requests[correlationId];
-                                                    reject(err);
-                                                });
-                                    });
-                                })
+                            return new Promise((resolve, reject) => {
+                                const correlationId = uuid();
+                                publishFn({type: method, payload}, correlationId, channelRoutingKey, '')
+                                    .then(
+                                        () => {
+                                            requests[correlationId] = {resolve, reject};
+                                        },
+                                        (err) => {
+                                            delete requests[correlationId];
+                                            reject(err);
+                                        });
+                            });
+                        })
                 },
                 getOne: (exchangeName, routingKey = '') => subscribeToExchange(channel, exchangeName, routingKey)
                     .then(queue => () =>
