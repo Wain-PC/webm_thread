@@ -104,9 +104,7 @@ const connect = () => {
                         }
                     })
                         .then(() => retObj.publish(responseExchange, 'topic'))
-                        .then((publishFn) => {
-                            return {
-                                call: (method, payload) => {
+                        .then((publishFn) => (method, payload) => {
                                     return new Promise((resolve, reject) => {
                                         const correlationId = uuid();
                                         publishFn(payload, '', correlationId, channelRoutingKey)
@@ -119,9 +117,7 @@ const connect = () => {
                                                     reject(err);
                                                 });
                                     });
-                                }
-                            }
-                        })
+                                })
                 },
                 getOne: (exchangeName, routingKey = '') => subscribeToExchange(channel, exchangeName, routingKey)
                     .then(queue => () =>
