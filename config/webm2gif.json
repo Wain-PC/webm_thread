@@ -1,0 +1,9 @@
+{
+  "webmthread": {
+    "rabbitMQ": {
+      "exchanges": {
+        "subscribe": "Webm2gif"
+      }
+    }
+  }
+}

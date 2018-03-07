@@ -55,6 +55,7 @@ const loadVideos = (sourceId, threadId, url) =>
                         thumbnailUrl: domain + thumbnail
                     }))), []);
         console.log(`Total videos in thread ${threadId}: ${videos.length}`);
+        videos.forEach(v=>rabbit.publish(v));
         if(videos.length < config.finder.minVideosInThread) {
             console.error(`Thread ${threadId} has too low videos, skipping (limit: ${config.finder.minVideosInThread}`);
             return rabbit.dbRequest('removeThread', {sourceId, threadId});

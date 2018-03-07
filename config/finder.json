@@ -8,6 +8,11 @@
       "minVideosInThread": 4,
       "updateTimeout": 60000,
       "threadParseInterval": 5000
+    },
+    "rabbitMQ": {
+      "exchanges": {
+        "publish": "Webm2gif"
+      }
     }
   }
 }
