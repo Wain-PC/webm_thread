@@ -6,9 +6,9 @@ const config = require('config').get('webmthread').get('rabbitMQ');
 
 let connectionPromise;
 
-const subscribeToExchange = (channel, exchangeName, routingKey, callback, queueOptions = {}) => {
-    channel.assertExchange(exchangeName, 'fanout');
-    return channel.assertQueue(null, {durable: false, autoDelete: true, ...queueOptions})
+const subscribeToExchange = (channel, exchangeName, exchangeType, routingKey, callback, queueOptions = {}) =>
+    channel.assertExchange(exchangeName, exchangeType)
+        .then(()=> channel.assertQueue(null, {durable: false, autoDelete: true, ...queueOptions}))
         .then(({queue}) => {
             return channel.bindQueue(queue, exchangeName, routingKey)
                 .then(() => {
@@ -18,7 +18,6 @@ const subscribeToExchange = (channel, exchangeName, routingKey, callback, queueO
                     return queue;
                 });
         });
-};
 
 const connectionInitialize = (url) => amqp.connect(url)
     .catch((err) => new Promise(resolve => {
@@ -62,10 +61,10 @@ const connect = () => {
         .then(connection => connection.createChannel())
         .then((channel) => {
             const retObj = {
-                subscribe: (exchangeName, onMessage, queueOptions) => {
-                    return subscribeToExchange(channel, exchangeName, channelRoutingKey, parseRabbitMessage(onMessage), queueOptions);
+                subscribe: ({name: exchangeName, type: exchangeType = 'fanout', onMessage, options: queueOptions}) => {
+                    return subscribeToExchange(channel, exchangeName, exchangeType, channelRoutingKey, parseRabbitMessage(onMessage), queueOptions);
                 },
-                publish: (exchangeName, exchangeType = 'fanout') => {
+                publish: ({name: exchangeName, type: exchangeType = 'fanout'}) => {
                     return channel.assertExchange(exchangeName, exchangeType)
                         .then(() => (payload, correlationId = uuid(), replyTo = '', routingKey = channelRoutingKey) => {
                             const result = channel.publish(exchangeName, routingKey, new Buffer(JSON.stringify(payload)), {
@@ -83,9 +82,8 @@ const connect = () => {
                             return Promise.resolve(result);
                         })
                 },
-                //TODO: For RPC, Response exchange must be of type 'topic', not 'fanout'. Maybe, other exchanges as well?
-                rpc: (requestExchange, responseExchange) => {
-                    return subscribeToExchange(channel, responseExchange, channelRoutingKey, (message) => {
+                rpc: ({request: requestExchange, response: responseExchange}) => {
+                    return subscribeToExchange(channel, responseExchange, 'topic', channelRoutingKey, (message) => {
                         const {content, properties: {correlationId}} = message;
                         console.log(`Received RPC response with corrId ${correlationId}`);
                         if (requests[correlationId]) {
@@ -106,7 +104,7 @@ const connect = () => {
                             delete requests[correlationId];
                         }
                     })
-                        .then(() => retObj.publish(requestExchange, 'fanout'))
+                        .then(() => retObj.publish({name: requestExchange}))
                         .then((publishFn) => (method, payload) => {
                             return new Promise((resolve, reject) => {
                                 const correlationId = uuid();
@@ -122,7 +120,7 @@ const connect = () => {
                             });
                         })
                 },
-                getOne: (exchangeName, routingKey = '') => subscribeToExchange(channel, exchangeName, routingKey)
+                getOne: (exchangeName, routingKey = '') => subscribeToExchange(channel, exchangeName, 'fanout', routingKey)
                     .then(queue => () =>
                         channel.get(queue)
                             .then(msg => {

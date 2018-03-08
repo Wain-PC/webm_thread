@@ -61,8 +61,8 @@ connectToDb()
     .then((rabbitInstance) => {
         const {subscribe, publish} = config.rabbitMQ.exchanges;
         console.log("DB Connection established");
-        return rabbitInstance.publish(publish)
-            .then(publishFn => rabbitInstance.subscribe(subscribe, onMessage(publishFn)))
+        return rabbitInstance.publish({name: publish, type: 'topic'})
+            .then(publishFn => rabbitInstance.subscribe({name: subscribe, onMessage: onMessage(publishFn)}))
             .then(()=>console.log("RabbitMQ Connection established"));
     }, (err) => {
         console.log("RabbitMQ Connection errored with", err);

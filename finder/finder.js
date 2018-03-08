@@ -78,13 +78,13 @@ const start = () => work()
 console.log("Starting Rabbit connection!");
 rabbit.connect().then((rabbitInstance) => {
     const {publish, dbRequests, dbResponses} = config.rabbitMQ.exchanges;
-    return rabbitInstance.publish(publish)
+    return rabbitInstance.publish({name: publish})
         .then(pFn => {
             publishFn = pFn;
 
         })
         .then(()=>{
-            return rabbitInstance.rpc(dbRequests, dbResponses)
+            return rabbitInstance.rpc({request: dbRequests, response: dbResponses})
                 .then(rFn => {
                     rpcFn = rFn;
                 })
