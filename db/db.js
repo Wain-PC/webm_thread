@@ -38,6 +38,12 @@ const onMessage = publish => ({type, payload}, correlationId, replyTo) => {
 
 const createSourceCollection = () => db.createCollection('sources');
 
+const connectionInitialize = () => connectToDb()
+    .catch((err) => new Promise(resolve => {
+        console.log(`DB is unavailable (${err}), waiting to try again in ${config.db.reconnectTimeout / 1000} seconds `);
+        setTimeout(() => resolve(connectionInitialize()), config.db.reconnectTimeout);
+    }));
+
 /**
  * Connects to the DB (sqlite@localhost)
  * @returns Promise<Db> instance
@@ -55,8 +61,8 @@ const connectToDb = () => {
         });
 };
 
-console.log("Starting Rabbit connection!");
-connectToDb()
+console.log("Starting DB and Rabbit connection!");
+connectionInitialize()
     .then(() => rabbit.connect())
     .then((rabbitInstance) => {
         const {subscribe, publish} = config.rabbitMQ.exchanges;

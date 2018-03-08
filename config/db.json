@@ -3,7 +3,8 @@
     "db": {
       "host": "webmthread",
       "port": 27017,
-      "dbName": "webmThread"
+      "dbName": "webmThread",
+      "reconnectTimeout": 5000
     },
     "rabbitMQ": {
       "exchanges": {
