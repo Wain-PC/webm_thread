@@ -1,5 +1,6 @@
 const exec = require('child_process').exec;
 const mkdirp = require('mkdirp');
+const fileExists = require('file-exists');
 const rabbit = require('rabbit');
 const config = require('config').get('webmthread');
 
@@ -19,14 +20,21 @@ const toGif = ({content: {url, displayName}}) => new Promise((resolve, reject) =
     const arr = url.split('/');
     const path = arr.slice(2, -1).join('/');
     const fileName = arr.slice(-1)[0];
-    console.log('Received new video:', path, fileName, displayName);
-    //Step 2. Create appropriate folders, if none.
-    mkdirp(path, err => {
-        if(err) {
-            return reject(err);
+    const fullPath = `${path}/${fileName}.gif`;
+    //Step 2. Check whether this filename already exists.
+    fileExists(fullPath).then(exists => {
+        if(exists) {
+            return reject(new Error(`Gif already exists for webm `))
         }
-        //Step 3. Convert and save video into the desired folder.
-        return exec(`bash ./gifenc.sh ${url} ${path} ${fileName}`, (error, stdout, stderr) => error ? reject(stderr) : resolve(stdout));
+        console.log('Received new video:', path, fileName, displayName);
+        //Step 3. Create appropriate folders, if none.
+        return mkdirp(path, err => {
+            if(err) {
+                return reject(err);
+            }
+            //Step 4. Convert and save video into the desired folder.
+            return exec(`bash ./gifenc.sh ${url} ${path} ${fileName}`, (error, stdout, stderr) => error ? reject(stderr) : resolve(stdout));
+        });
     });
 });
 
