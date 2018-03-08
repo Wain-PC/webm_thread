@@ -22,14 +22,17 @@ const api = {
 const onMessage = publish => ({type, payload}, correlationId, replyTo) => {
     console.log(`Received message from RabbitMQ
     Type: ${type}
-    Payload: ${JSON.stringify(payload)}`,);
+    Payload: ${JSON.stringify(payload)}
+    CorrelationId: ${correlationId}
+    ReplyTo: ${replyTo}`
+    );
     setTimeout(() => {
         if (typeof api[type] !== 'function') {
             return publish({error: `DB has no such RPC method (${type})`}, correlationId, replyTo);
         }
         return api[type](payload).then(
-            data => publish(data, correlationId, replyTo),
-            ({message}) => publish({error: message}, correlationId, replyTo));
+            data => publish(data, correlationId, '', replyTo),
+            ({message}) => publish({error: message}, correlationId, '', replyTo));
     }, 100);
 };
 

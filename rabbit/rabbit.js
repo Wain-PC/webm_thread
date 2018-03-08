@@ -77,6 +77,7 @@ const connect = () => {
                             console.log(`Published to exchange ${exchangeName} (type '${exchangeType}') 
                                             with routingKey ${routingKey}
                                             with correlationId ${correlationId}
+                                            with replyTo ${replyTo}
                                             with data ${JSON.stringify(payload)}
                                             with result ${result}`);
                             return Promise.resolve(result);
