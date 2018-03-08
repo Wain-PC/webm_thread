@@ -1,12 +1,8 @@
-$('.webm-file')
-    .mouseover(function () {
-   var href = this.parentNode.getAttribute('href');
-   var resultHref = 'http://localhost:8080/2ch.hk' + href + '.gif';
-   console.log(href, resultHref);
+$(document)
+    .on('mouseover', '.webm-file', function () {
+   var resultHref = 'http://localhost:8080/2ch.hk' + this.parentNode.getAttribute('href') + '.gif';
    this.setAttribute('src', resultHref);
-}).mouseout(function () {
-   var href = this.parentNode.getAttribute('href');
-   var resultHref = href.replace('src', 'thumb').replace(/\.mp4|\.webm/, 's.jpg');
-   console.log(href, resultHref);
+}).on('mouseout', '.webm-file', function () {
+   var resultHref = this.parentNode.getAttribute('href').replace('src', 'thumb').replace(/\.mp4|\.webm/, 's.jpg');
    this.setAttribute('src', resultHref);
 });
