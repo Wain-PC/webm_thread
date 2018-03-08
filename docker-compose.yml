@@ -26,6 +26,15 @@ services:
     depends_on:
       - rabbit
       - db
+  webm2gif:
+    build:
+     context: .
+     dockerfile: ./webm2gif/Dockerfile
+    networks:
+      - webmthread
+    depends_on:
+      - rabbit
+      - db
   db:
     build:
      context: .

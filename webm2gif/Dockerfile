@@ -1,11 +1,17 @@
 FROM node:9
 
-COPY config /app/config
-COPY ./db/package.json /app/
-COPY ./db/yarn.lock /app/
-WORKDIR /app
-RUN yarn
-COPY db /app
-ENV NODE_ENV=db
+RUN echo "deb http://ftp.uk.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
+RUN apt-get update && apt-get install ffmpeg -y
 
-CMD ["node", "index.js"]
+COPY config /app/config
+COPY rabbit /app/rabbit
+COPY webm2gif/package.json /app/webm2gif/
+COPY webm2gif/yarn.lock /app/webm2gif/
+COPY webm2gif/webm2gif.js /app/webm2gif/
+COPY webm2gif/gifenc.sh /app/webm2gif/
+WORKDIR /app/webm2gif
+RUN yarn
+ENV NODE_ENV "webm2gif"
+ENV NODE_CONFIG_DIR "/app/config"
+
+CMD ["node", "webm2gif.js"]
