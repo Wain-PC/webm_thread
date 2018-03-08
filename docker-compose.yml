@@ -32,6 +32,21 @@ services:
      dockerfile: ./webm2gif/Dockerfile
     networks:
       - webmthread
+    volumes:
+      - webm2gif:/storage
+    depends_on:
+      - rabbit
+      - db
+  gifserve:
+    ports:
+      - "8080:8080"
+    build:
+     context: .
+     dockerfile: ./gifserve/Dockerfile
+    networks:
+      - webmthread
+    volumes:
+      - webm2gif:/storage
     depends_on:
       - rabbit
       - db
@@ -47,5 +62,6 @@ services:
 volumes:
   rabbitmq:
   db:
+  webm2gif:
 networks:
   webmthread:

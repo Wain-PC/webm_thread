@@ -1,8 +1,5 @@
 {
   "webmthread": {
-    "webm2gif": {
-      "storagePath": "/storage"
-    },
     "rabbitMQ": {
       "exchanges": {
         "subscribe": "Webm2gif"
