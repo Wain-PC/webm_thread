@@ -122,7 +122,7 @@ const connect = () => {
                 },
                 getOne: (exchangeName, routingKey = '') => subscribeToExchange(channel, exchangeName, 'fanout', routingKey)
                     .then(queue => () =>
-                        channel.get(queue)
+                        channel.get(queue, {noAck: true})
                             .then(msg => {
                                 if (msg === false) {
                                     throw new Error('Nothing to get, queue is empty');
